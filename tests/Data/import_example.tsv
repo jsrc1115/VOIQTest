@@ -1,0 +1,10 @@
+First Name	Last Name	Email	Primary	Phone
+Import1	User1	import1@email2.com	true	3134567852
+Import1	User1	import1@email1.com	false	3134567851
+Import2	User1	import2@email1.com	true	3134567853
+Import2	User1	import2@email2.com	false	3134567854
+Import2	User1	import2@email3.com	false	3134567855
+Import3	User1	import3@email1.com	true	3134567856
+Import3	User1	import3@email2.com	false	3134567857
+Import3	User1	import3@email3.com	false	3134567858
+Import3	User1	import3@email4.com	false	3134567859
