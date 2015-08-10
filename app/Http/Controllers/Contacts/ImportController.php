@@ -10,6 +10,7 @@ namespace App\Http\Controllers\Contacts;
 
 use App\Contact;
 use App\ContactEmail;
+use App\ContactImportLog;
 use App\ContactNumber;
 use App\Http\Controllers\Controller;
 use App\ValueObjects\CRUDResultData;
@@ -32,7 +33,7 @@ class ImportController extends Controller
      */
     public function postImportContacts(Request $request)
     {
-        Log::info("ImportRequest:");
+        $start = microtime(true);
         $authenticated_user = $request->user();
         $creation_data = new CRUDResultData;
 
@@ -45,16 +46,22 @@ class ImportController extends Controller
 
             $validation_data = $this->validateExcel($worksheet);
             if ($validation_data->success == false) {
-                return View('contacts/import_contact')->with('creation_data', $validation_data);
+                $creation_data = $validation_data;
             }
-            $creation_data->extra_info = $validation_data->extra_info;
-
-            $insert_data = $this->insertFromExcel($worksheet,$authenticated_user);
-
+            else{
+                $creation_data->success = true;
+                $creation_data->extra_info = $validation_data->extra_info;
+                $this->insertFromExcel($worksheet, $authenticated_user);
+            }
         } elseif ($extension == 'csv' or $extension == 'tsv') {
 
         }
-        $creation_data-> success = true;
+
+        $creation_data->extra_info .= 'Time to finish: ' . round((microtime(true) - $start) * 1000, 3) . ' ms. ';
+        $creation_data->extra_info .= 'Uploaded by: ' . $authenticated_user->name . ' - ' . $authenticated_user->email . '. ';
+
+        $this->logImportResult($creation_data, $authenticated_user);
+
         return View('contacts/import_contact')->with('creation_data', $creation_data);
     }
 
@@ -75,11 +82,11 @@ class ImportController extends Controller
                 if ($headerVerified) {
                     $validation_data->success = false;
                     $validation_data->errors = $validator->errors()->all();
-                    $validation_data->extra_info .= 'Failing data, first_name: '.$row[0].
-                                                    ', last_name: '.$row[1].
-                                                    ', email: '.$row[2].
-                                                    ', primary: '.$row[3].
-                                                    ', phone_number: '.$row[4].'. ';
+                    $validation_data->extra_info .= 'Failing data, first_name: ' . $row[0] .
+                        ', last_name: ' . $row[1] .
+                        ', email: ' . $row[2] .
+                        ', primary: ' . $row[3] .
+                        ', phone_number: ' . $row[4] . '. ';
                     return $validation_data;
                 } else {
                     $validation_data->extra_info .= 'Header detected. ';
@@ -87,17 +94,15 @@ class ImportController extends Controller
                 }
             }
         }
-        if($headerVerified){
+        if ($headerVerified) {
             unset($worksheet[0]);
         }
         $validation_data->success = true;
         return $validation_data;
     }
 
-    protected function insertFromExcel($worksheet,$authenticated_user)
+    protected function insertFromExcel($worksheet, $authenticated_user)
     {
-        $insert_data = new CRUDResultData;
-
         foreach ($worksheet as $row) {
             $data = array();
             $data['first_name'] = $row[0];
@@ -106,34 +111,46 @@ class ImportController extends Controller
             $data['primary'] = $row[3] == 'true';
             $data['phone_number'] = $row[4];
 
-            $contact = Contact::where(['first_name'=>$data['first_name'],'last_name'=>$data['last_name'],'user_id'=>$authenticated_user->id]);
-            if($contact->exists())
-            {
+            $contact = Contact::where(['first_name' => $data['first_name'], 'last_name' => $data['last_name'], 'user_id' => $authenticated_user->id]);
+            if ($contact->exists()) {
                 $contact = $contact->first();
-            }
-            else{
+            } else {
                 $contact = Contact::create([
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
                     'user_id' => $authenticated_user->id
                 ]);
             }
-            if(isset($data['email']) && trim($data['email'])!==''){
+            if (isset($data['email']) && trim($data['email']) !== '') {
                 ContactEmail::create([
                     'contact_id' => $contact->id,
                     'email' => $data['email'],
                     'primary' => $data['primary']
                 ]);
             }
-            if(isset($data['phone_number']) && trim($data['phone_number'])!=='') {
+            if (isset($data['phone_number']) && trim($data['phone_number']) !== '') {
                 ContactNumber::create([
                     'contact_id' => $contact->id,
                     'phone_number' => $data['phone_number']
                 ]);
             }
         }
-        $insert_data->success = true;
-        return $insert_data;
+    }
+
+    protected function logImportResult($creation_data, $authenticated_user)
+    {
+        $error_text = '';
+        if (is_array($creation_data->errors)) {
+            foreach ($creation_data->errors as $error) {
+                $error_text .= $error;
+            }
+        }
+        ContactImportLog::create([
+            'success' => $creation_data->success,
+            'errors' => $error_text,
+            'extra_info' => $creation_data->extra_info,
+            'user_id' => $authenticated_user->id
+        ]);
     }
 
     protected function validator(array $data)

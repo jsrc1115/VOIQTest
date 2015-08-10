@@ -11,7 +11,8 @@
         "laravelcollective/html": "~5.0",
         "zizaco/entrust": "dev-laravel-5",
         "propaganistas/laravel-phone": "~2.0",
-        "maatwebsite/excel": "~2.0.0"
+        "maatwebsite/excel": "~2.0.0",
+        "parsecsv/php-parsecsv": "0.4.5"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

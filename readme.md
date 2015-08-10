@@ -1,27 +1,75 @@
-## Laravel PHP Framework
+# VOIQ Test
+Ejemplo de uso de Laravel para crear un sencillo manejador de usuarios y contactos.
+## Librerias usadas:
+### "laravelcollective/html": "~5.0"
+Soporte a html injectado en los archivos blade, en este caso se utilizo para que laravel manejara correctamente la subida del spreadsheet con los contactos.
 
-[![Build Status](https://travis-ci.org/laravel/framework.svg)](https://travis-ci.org/laravel/framework)
-[![Total Downloads](https://poser.pugx.org/laravel/framework/d/total.svg)](https://packagist.org/packages/laravel/framework)
-[![Latest Stable Version](https://poser.pugx.org/laravel/framework/v/stable.svg)](https://packagist.org/packages/laravel/framework)
-[![Latest Unstable Version](https://poser.pugx.org/laravel/framework/v/unstable.svg)](https://packagist.org/packages/laravel/framework)
-[![License](https://poser.pugx.org/laravel/framework/license.svg)](https://packagist.org/packages/laravel/framework)
+``` php
+{!! Form::open(array('url' => 'contacts/import_contacts',
+                     'method' => 'post',
+                     'class' => 'form',
+                     'novalidate' => 'novalidate',
+                     'files' => true)) !!}
+```
+### "zizaco/entrust": "dev-laravel-5"
+Usado para el manejo de roles en la aplicación en conjunto con el middleware (Auth) que viene con Laravel.
+``` php
+Entrust::routeNeedsPermission('admin/*', 'edit-users',Redirect::to('errors/403'));
+```
+### "propaganistas/laravel-phone": "~2.0"
+Para evitar el desarrollo de un validator propio para la condición: "phone number (US only, supporting multiple entries)", se uso esta libreria en conjunto con el validator de laravel.
+### "maatwebsite/excel": "~2.0.0"
+Libreria que integra PHPExcel facilmente a Laravel, se uso para leer correctamente los archivos xls y xlsx con los que se importan los contactos.
+### "parsecsv/php-parsecsv": "0.4.5"
+Libreria usada para leer los archivos csv y tsv con los que se importan los contactos.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable, creative experience to be truly fulfilling. Laravel attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as authentication, routing, sessions, queueing, and caching.
+## Codigo propio implementado:
+### Controllers:
+1. AdminController:
+Agrupa todos los comportamientos de las paginas a las que puede acceder el administrador, quien puede crear, eliminar o editar usuarios.
 
-Laravel is accessible, yet powerful, providing powerful tools needed for large, robust applications. A superb inversion of control container, expressive migration system, and tightly integrated unit testing support give you the tools you need to build any application with which you are tasked.
+2. ContactsController:
+Agrupa todos los comportamientos de las paginas a las que puede acceder el usuario excepto la de importar contactos.
 
-## Official Documentation
+3. ImportController:
+Funciones para subir el archivo e insertar los contactos.
 
-Documentation for the framework can be found on the [Laravel website](http://laravel.com/docs).
+### Models:
+Todos los modelos son implementados, User esta por defecto pero se hicieron algunas modificaciones.
 
-## Contributing
+- Contact
+- ContactEmail
+- ContactImportLog
+- ContactNumber
+- Permission
+- Role
+- User
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](http://laravel.com/docs/contributions).
+### DML:
+Se agrega el esquema de la base de datos en database/DML, pero la base de datos se debe manejar con los migrations.
 
-## Security Vulnerabilities
+### Migrations y seeds:
+Se crean las migraciones apropiadas para inicializar la base de datos y un custom seeder para generar informacion inicial basica.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell at taylor@laravel.com. All security vulnerabilities will be promptly addressed.
-
-### License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)
+## Initial setup:
+Se debe crear una base de datos y cambiar el nombre en .env y config/database.php, luego se debe correr:
+```
+php artisan migrate:refresh --seed
+```
+En el database seed se crean dos usuarios por defecto:
+- Admin:
+```
+'email' => 'email1@example.com',
+'password' => 'password',
+```
+- User:
+- Admin:
+```
+'email' => 'user1@email.com',
+'password' => 'password',
+```
+## TODOs:
+1. Tests
+2. Implementar la carga de contactos en archivos CSV y TSV.
+3. Actualizacion de contactos.
+4. Delete de emails y telefonos adicionales en el formulario de crear contactos.
