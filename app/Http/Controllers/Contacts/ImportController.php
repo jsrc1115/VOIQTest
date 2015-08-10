@@ -38,7 +38,14 @@ class ImportController extends Controller
         $creation_data = new CRUDResultData;
 
         $file = Input::file('imported_contacts');
-        $extension = $file->getClientOriginalExtension();
+        if(is_null($file))
+        {
+            $extension = 'ERROR';
+            $creation_data->extra_info .= 'No file uploaded. ';
+        }
+        else{
+            $extension = $file->getClientOriginalExtension();
+        }
 
         if ($extension == 'xls' or $extension == 'xlsx') {
             $php_excel = Excel::load($file->getPathname());

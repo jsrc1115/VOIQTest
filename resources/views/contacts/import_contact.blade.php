@@ -66,9 +66,11 @@
                 @if(!is_null($creation_data))
                     @if(!$creation_data->success)
                         <div class="alert alert-danger" role="alert">Error: <br>
-                            @foreach($creation_data->errors as $error)
-                                {{$error}}<br>
-                            @endforeach
+                            @if(is_array($creation_data->errors))
+                                @foreach($creation_data->errors as $error)
+                                    {{$error}}<br>
+                                @endforeach
+                            @endif
                             {{$creation_data->extra_info}}
                         </div>
                     @else
