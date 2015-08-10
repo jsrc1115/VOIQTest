@@ -68,6 +68,10 @@ En el database seed se crean dos usuarios por defecto:
 'email' => 'user1@email.com',
 'password' => 'password',
 ```
+
+## Archivos de prueba:
+Los archivos de prueba para subir contactos estan en la carpeta tests/Data.
+
 ## TODOs:
 1. Tests
 2. Implementar la carga de contactos en archivos CSV y TSV.
