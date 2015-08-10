@@ -63,7 +63,6 @@ En el database seed se crean dos usuarios por defecto:
 'password' => 'password',
 ```
 - User:
-- Admin:
 ```
 'email' => 'user1@email.com',
 'password' => 'password',
